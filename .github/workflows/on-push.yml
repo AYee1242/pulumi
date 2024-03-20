@@ -1,0 +1,75 @@
+name: On Push
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  info:
+    name: info
+    uses: ./.github/workflows/ci-info.yml
+    permissions:
+      contents: read
+    with:
+      ref: ${{ github.ref }}
+      is-snapshot: false
+    secrets: inherit
+
+  dev-release:
+    name: dev-release
+    needs: [info, ci, prepare-release]
+    uses: ./.github/workflows/ci-dev-release.yml
+    permissions:
+      contents: write
+      # To sign artifacts.
+      id-token: write
+    with:
+      ref: ${{ github.ref }}
+      version: ${{ needs.info.outputs.version }}
+    secrets: inherit
+
+  update-dev-version:
+    name: update-dev-version
+    needs: [dev-release, info]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+      - name: Install Pulumictl
+        uses: jaxxstorm/action-install-gh-release@v1.7.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PULUMI_BOT_TOKEN }}
+        with:
+          repo: pulumi/pulumictl
+          tag: v0.0.46
+          cache: enable
+      - name: Git describe
+        id: ghd
+        uses: proudust/gh-describe@v1
+      - name: Dispatch event to docs repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.PULUMI_BOT_TOKEN }}
+        run: |
+          short_sha="${{ steps.ghd.outputs.short-sha }}"
+          version="${{ needs.info.outputs.version }}"
+          version="${version#v}-alpha.${short_sha}"
+          pulumictl dispatch -c pulumi-cli-dev-version -r pulumi/docs dev_version="$version"
+  ci-ok:
+      name: ci-ok
+      needs: [dev-release, update-dev-version]
+      if: always() # always report a status
+      runs-on: ubuntu-latest
+      steps:
+        - name: Dev release failed
+          if: ${{ needs.dev-release.result != 'success' }}
+          run: exit 1
+        - name: Update dev version failed
+          if: ${{ needs.update-dev-version.result != 'success' }}
+          run: exit 1
+        - name: CI succeeded
+          run: exit 0
