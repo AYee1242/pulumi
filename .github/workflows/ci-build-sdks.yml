@@ -112,7 +112,7 @@ jobs:
       - name: Build the Node SDK package
         run: |
           cd sdk/nodejs
-          PATH=./bin:$PATH make build_package
+          PATH=./bin:$PATH make -j4 build_package
       - name: Pack the Node SDK
         run: |
           cd sdk/nodejs/bin

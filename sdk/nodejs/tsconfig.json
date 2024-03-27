@@ -10,6 +10,7 @@
         "sourceMap": true,
         "stripInternal": true,
         "experimentalDecorators": true,
+        "incremental": true,
         "pretty": true,
         "noFallthroughCasesInSwitch": true,
         "noImplicitReturns": true,
