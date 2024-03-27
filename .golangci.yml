@@ -31,6 +31,10 @@ linters:
     - perfsprint
     - depguard
     - importas
+    - gocritic
+    - gosimple
+    - gomd
+    - gofmt
 
 linters-settings:
   nakedret:
