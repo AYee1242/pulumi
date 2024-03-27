@@ -9,6 +9,7 @@
         "resolveJsonModule": true,
         "sourceMap": true,
         "stripInternal": true,
+        "incremental": true,
         "experimentalDecorators": true,
         "pretty": true,
         "noFallthroughCasesInSwitch": true,
