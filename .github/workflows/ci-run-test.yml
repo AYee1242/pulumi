@@ -373,7 +373,6 @@ jobs:
         with:
           path: ${{ env.TEST_STATUS_FILE }}
       - name: Summarize Test Time by Package
-        continue-on-error: true
         env:
           RUNNER_OS: ${{ runner.os }}
         run: |
@@ -384,7 +383,9 @@ jobs:
             # It's just another case of BSD sed, GNU sed.
             sed -i '' -e '/"Action":"output"/d' ./test-results/*.json
           else
-            sed -i'' -e '/"Action":"output"/d' ./test-results/*.json
+            Get-ChildItem -Path .\test-results\*.json | ForEach-Object {
+                (Get-Content $_.FullName) -notmatch '"Action":"output"' | Set-Content $_.FullName
+            }
           fi
 
           goteststats -statistic pkg-time test-results/*.json
